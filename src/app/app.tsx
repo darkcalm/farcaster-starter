@@ -1,36 +1,33 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
-import sdk, {
-  type FrameContext,
-} from "@farcaster/frame-sdk";
+import React, { useEffect, useState, useCallback } from "react";
+import sdk, { type FrameContext } from "@farcaster/frame-sdk";
 
-import { useActiveAccount, useActiveWallet, useConnect } from "thirdweb/react";
+import { useConnect } from "thirdweb/react";
 import { EIP1193 } from "thirdweb/wallets";
 import { ThirdwebClient } from "~/constants";
-import { Button } from "~/components/Button";
-import { shortenAddress } from "thirdweb/utils";
-import { prepareTransaction, sendTransaction } from "thirdweb";
-import { base } from "thirdweb/chains";
+//import { shortenAddress } from "thirdweb/utils";
+//import { prepareTransaction, sendTransaction } from "thirdweb";
+//import { base } from "thirdweb/chains";
 
 export default function App() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [context, setContext] = useState<FrameContext>();
+  const [, setContext] = useState<FrameContext>();
   const { connect } = useConnect();
-  const wallet = useActiveWallet();
-  const account = useActiveAccount();
+  //  const wallet = useActiveWallet();
+  //  const account = useActiveAccount();
 
   const connectWallet = useCallback(async () => {
     connect(async () => {
       // create a wallet instance from the Warpcast provider
       const wallet = EIP1193.fromProvider({ provider: sdk.wallet.ethProvider });
-      
+
       // trigger the connection
       await wallet.connect({ client: ThirdwebClient });
-      
+
       // return the wallet to the app context
       return wallet;
-    })
+    });
   }, [connect]);
 
   useEffect(() => {
@@ -47,59 +44,134 @@ export default function App() {
     }
   }, [isSDKLoaded, connectWallet]);
 
-  return (
-    <main className="bg-slate-900 h-screen w-screen text-white">
-    <div className="w-[300px] mx-auto py-4 px-2 pt-32">
-      <div className="flex flex-col items-center gap-2 mb-8">
-        <div className="rounded-full m-auto overflow-hidden border-slate-800 border-2 size-32">
-          {context?.user.pfpUrl ? (
-            // We intentionally don't use Next's Image here since we can't predict the domain and should not allow any image domain
-            // eslint-disable-next-line @next/next/no-img-element
-            <img className="object-cover size-full" src={context?.user.pfpUrl} alt={context?.user.displayName ?? "User Profile Picture"} width={100} height={100} />
-          ) : (
-            <div className="flex items-center justify-center size-full bg-slate-800 animate-pulse rounded-full" />
-          )}
-        </div>
-        <div className="w-full flex justify-center items-center text-center">
-          {context?.user.displayName ? <h1 className="text-2xl font-bold text-center">{context?.user.displayName}</h1> : <div className="animate-pulse w-36 m-auto h-8 bg-slate-800 rounded-md" />}
-        </div>
-        {account?.address && 
-          <div className="w-full flex justify-center items-center text-center">
-            <p className="text-base text-slate-500">{shortenAddress(account.address)}</p>
-          </div>
-        }
-      </div>
+  const [content, setContent] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentBaseUrl, setCurrentBaseUrl] = useState(
+    "https://filedn.com/lxUBX0hA2uQYeRydyYCII9b/(html-64mpp)%F0%9F%92%A1-yak-rover_5456cdd9-027d-485d-b31e-256295e7a1e0/%F0%9F%92%A1-yak-rover_5456cdd9-027d-485d-b31e-256295e7a1e0/",
+  );
 
-      <div className="flex justify-stretch flex-col gap-2">
-        {!wallet ?
-          <Button disabled={!isSDKLoaded} onClick={connectWallet}>Connect Wallet</Button>
-          :
-          <>
-            <Button disabled={!isSDKLoaded} onClick={wallet.disconnect}>Disconnect Wallet</Button>
-            <Button disabled={!isSDKLoaded} onClick={async () => {
-              if (!account) {
-                alert("Transaction failed: No account connected");
-                return;
-              }
-              
-              if (wallet.getChain()?.id !== base.id) {
-                await wallet.switchChain(base);
-              }
+  const translateRelativePaths = useCallback(
+    (content: string, baseUrl: string) => {
+      const div = document.createElement("div");
+      div.innerHTML = content;
 
-              const tx = prepareTransaction({
-                chain: base,
-                to: account.address,
-                value: 10000n,
-                client: ThirdwebClient,
-              })
-              sendTransaction({ transaction: tx, account });
-            }}>
-              Send Transaction
-            </Button>
-          </>
+      try {
+        // Fix image sources
+        const images = div.getElementsByTagName("img");
+        Array.from(images).forEach((img) => {
+          const relativeSrc = img.getAttribute("src");
+          if (relativeSrc && !relativeSrc.startsWith("http")) {
+            img.src = new URL(relativeSrc, baseUrl).href;
+          }
+        });
+      } catch (error) {
+        setContent(`Error fixing image sources: ${error}`);
       }
-      </div>
-    </div>
-    </main>
+
+      try {
+        // Convert links to buttons
+        const links = div.getElementsByTagName("a");
+        Array.from(links).forEach((link) => {
+          const href = link.getAttribute("href");
+          const className = link.className;
+          if (href && !href.startsWith("http")) {
+            const fullUrl = new URL(href, baseUrl).href;
+            if (fullUrl.split("#")[0] === baseUrl.split("#")[0]) {
+              // If it's the same URL as baseUrl (ignoring hash),
+              // make it add the hash to the Next.js app URL
+              const hash = fullUrl.split("#")[1];
+              link.href = `${process.env.NEXT_PUBLIC_URL}#${hash}`;
+            } else {
+              const button = document.createElement("a");
+              button.innerHTML = link.innerHTML;
+              button.className = className;
+              button.setAttribute("data-href", fullUrl);
+              link.parentNode?.replaceChild(button, link);
+            }
+          }
+        });
+      } catch (error) {
+        setContent(`Error converting links to buttons: ${error}`);
+      }
+
+      // Add base tag
+      const baseTag = `<base href="${baseUrl}">`;
+      return baseTag + div.innerHTML;
+    },
+    [isLoading],
+  );
+
+  const fetchAndProcessContent = useCallback(
+    async (url: string, baseUrl: string) => {
+      if (isLoading) return;
+
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          "https://api.allorigins.win/get?url=" + encodeURIComponent(url),
+        );
+        const data = await response.json();
+        const translatedContent = translateRelativePaths(
+          data.contents,
+          baseUrl,
+        );
+        setContent(translatedContent);
+      } catch (error) {
+        console.error("Error fetching content:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [translateRelativePaths, isLoading],
+  );
+
+  const handleButtonClick = useCallback(
+    (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (target.tagName === "A" && !isLoading) {
+        const newUrl = target.getAttribute("data-href");
+        if (newUrl) {
+          setCurrentBaseUrl(newUrl);
+          fetchAndProcessContent(newUrl, newUrl);
+        }
+      }
+    },
+    [fetchAndProcessContent, isLoading],
+  );
+
+  useEffect(() => {
+    document.addEventListener("click", handleButtonClick);
+    return () => {
+      document.removeEventListener("click", handleButtonClick);
+    };
+  }, [handleButtonClick]);
+
+  useEffect(() => {
+    const initialUrl = currentBaseUrl + "%F0%9F%92%A1-yak-rover_page_1.html";
+    fetchAndProcessContent(initialUrl, currentBaseUrl);
+  }, []);
+
+  return (
+    <React.Fragment>
+      {isLoading && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            background: "rgba(255, 255, 255, 0.8)",
+            zIndex: 10000,
+          }}
+        >
+          Loading...
+        </div>
+      )}
+      <div dangerouslySetInnerHTML={{ __html: content }} />
+    </React.Fragment>
   );
 }

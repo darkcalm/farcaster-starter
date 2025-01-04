@@ -4,8 +4,8 @@ import { ThirdwebProvider } from "thirdweb/react";
 import "~/app/globals.css";
 
 export const metadata: Metadata = {
-  title: "Farcaster Frames v2 Demo",
-  description: "A Farcaster Frames v2 demo app",
+  title: "wrapper",
+  description: "wrapper demo app",
 };
 
 export default function RootLayout({
@@ -15,10 +15,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        <ThirdwebProvider>
-          {children}
-        </ThirdwebProvider>
+      <body style={{ margin: "3px", backgroundColor: "rgb(49, 51, 56)" }}>
+        <ThirdwebProvider>{children}</ThirdwebProvider>
       </body>
     </html>
   );

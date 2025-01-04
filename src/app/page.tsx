@@ -7,10 +7,10 @@ const frame = {
   version: "next",
   imageUrl: `${appUrl}/frame.png`,
   button: {
-    title: "Launch Frame",
+    title: "launch",
     action: {
       type: "launch_frame",
-      name: "Thirdweb Frames Starter",
+      name: "wrapper",
       url: appUrl,
       splashImageUrl: `${appUrl}/splash.png`,
       splashBackgroundColor: "#0f172a",
@@ -22,10 +22,10 @@ export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Thirdweb Frames Starter",
+    title: "wrapper",
     openGraph: {
-      title: "Thirdweb Frames Starter",
-      description: "A Thirdweb frames starter app.",
+      title: "wrapper",
+      description: "wraps",
     },
     other: {
       "fc:frame": JSON.stringify(frame),
@@ -34,5 +34,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function Home() {
-  return (<App />);
+  return <App />;
 }
