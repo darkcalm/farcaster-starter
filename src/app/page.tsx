@@ -23,6 +23,7 @@ const frame = {
 export const revalidate = 300;
 
 export const viewport: Viewport = {
+  width: 980,
   viewportFit: "cover",
 };
 
