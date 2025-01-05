@@ -1,3 +1,5 @@
+import { Viewport } from "next";
+
 import { Metadata } from "next";
 import App from "./app";
 
@@ -20,10 +22,13 @@ const frame = {
 
 export const revalidate = 300;
 
+export const viewport: Viewport = {
+  viewportFit: "cover",
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "wrapper",
-    viewport: null,
     openGraph: {
       title: "wrapper",
       description: "wraps",
