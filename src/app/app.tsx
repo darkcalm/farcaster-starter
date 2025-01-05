@@ -47,8 +47,9 @@ export default function App() {
   const [content, setContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [currentBaseUrl, setCurrentBaseUrl] = useState(
-    "https://filedn.com/lxUBX0hA2uQYeRydyYCII9b/(html-64mpp)%F0%9F%92%A1-yak-rover_5456cdd9-027d-485d-b31e-256295e7a1e0/%F0%9F%92%A1-yak-rover_5456cdd9-027d-485d-b31e-256295e7a1e0/",
+    "https://filedn.com/lxUBX0hA2uQYeRydyYCII9b/%28html-64mpp%29%F0%9F%92%A1composable-and-distributed-systems_8ced5d00-40d8-4b69-b155-f6e4233b31f2/%F0%9F%92%A1composable-and-distributed-systems_8ced5d00-40d8-4b69-b155-f6e4233b31f2/",
   );
+  const fileUrl = "%F0%9F%92%A1composable-and-distributed-systems_page_1.html";
 
   const translateRelativePaths = useCallback(
     (content: string, baseUrl: string) => {
@@ -147,7 +148,7 @@ export default function App() {
   }, [handleButtonClick]);
 
   useEffect(() => {
-    const initialUrl = currentBaseUrl + "%F0%9F%92%A1-yak-rover_page_1.html";
+    const initialUrl = currentBaseUrl + fileUrl;
     fetchAndProcessContent(initialUrl, currentBaseUrl);
   }, []);
 
