@@ -23,7 +23,7 @@ export const revalidate = 300;
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "wrapper",
-    viewport: false,
+    viewport: null,
     openGraph: {
       title: "wrapper",
       description: "wraps",
